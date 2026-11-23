@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAMERYA | PS4 HOST</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main class="main-container">
+  
+  <!-- اختيار الإصدار -->
+  <section class="fw-selector">
+    <label>إصدار النظام</label>
+    <select id="fwSelect">
+      <option value="900goldhen" selected>9.00 GoldHEN</option>
+      <option value="900v3">9.00 v3.0</option>
+      <option value="672goldhen">6.72 GoldHEN</option>
+      <option value="672">6.72 v3.0</option>
+      <option value="505">5.05 v2.5</option>
+      <option value="multi">Multi 7.00 – 14.02</option>
+    </select>
+    <label>اختار إصدار جهازك</label>
+  </section>
+
+  <!-- زر تفعيل GoldHEN -->
+  <button class="goldhen-btn" onclick="launchGoldHEN()">
+    <span class="icon">🎮</span>
+    <span>تفعيل GoldHEN</span>
+  </button>
+
+  <!-- الكروت الثلاثة -->
+  <section class="cards">
+    <button class="card" onclick="togglePanel('toolsPanel')">
+      <span class="card-icon">🛠️</span>
+      <span class="card-title">الأدوات</span>
+    </button>
+
+    <button class="card" onclick="togglePanel('appsPanel')">
+      <span class="card-icon">📦</span>
+      <span class="card-title">البرامج</span>
+    </button>
+
+    <button class="card card-active" onclick="launchGoldHEN()">
+      <span class="card-icon">🎮</span>
+      <span class="card-title">التفعيل</span>
+    </button>
+  </section>
+
+  <!-- النصوص السفلية -->
+  <div class="version-links">
+    <span>النسخة المستقرة</span>
+    <i></i>
+    <span>النسخة التجريبية</span>
+  </div>
+
+</main>
+
+<!-- ================= النوافذ المنبثقة ================= -->
+
+<div id="toolsPanel" class="overlay hidden">
+  <div class="modal">
+    <button class="close" onclick="togglePanel('toolsPanel')">✕</button>
+    <h2>الأدوات / Payloads</h2>
+    <label class="ip-label">PS4 IP Address</label>
+    <input id="ps4-ip" type="text" placeholder="مثال: 192.168.1.45">
+    <button class="save-btn" onclick="saveIP()">حفظ IP</button>
+    <div class="modal-grid">
+      <button class="tool-btn red" onclick="sendPayload('disable_updates.bin')">🚫 تعطيل التحديثات</button>
+      <button class="tool-btn green" onclick="sendPayload('enable_updates.bin')">♻️ إرجاع التطبيقات</button>
+    </div>
+    <p id="payload-status" class="status">جاهز</p>
+  </div>
+</div>
+
+<div id="appsPanel" class="overlay hidden">
+  <div class="modal">
+    <button class="close" onclick="togglePanel('appsPanel')">✕</button>
+    <h2>تطبيقات Homebrew</h2>
+    <div class="modal-grid">
+      <a class="app-link" href="https://github.com/bucanero/apollo-ps4/releases" target="_blank"><strong>Apollo Save Tool</strong><span>إدارة ملفات الحفظ</span></a>
+      <a class="app-link" href="https://github.com/LightningMods/Itemzflow/releases" target="_blank"><strong>Itemzflow</strong><span>مدير المكتبة والألعاب</span></a>
+      <a class="app-link" href="https://pkg-zone.com/details/HBStore" target="_blank"><strong>Homebrew Store</strong><span>متجر التطبيقات</span></a>
+      <a class="app-link" href="https://github.com/Lapy05575948/ps4-xplorer/releases" target="_blank"><strong>PS4 Xplorer</strong><span>مدير الملفات</span></a>
+    </div>
+  </div>
+</div>
+
+<script>
+const fwMap = {
+  multi: 'g2all/index.html',
+  '505': '505/index.html',
+  '672goldhen': '672goldhen/index.html',
+  '672': '672/index.html',
+  '900goldhen': '900goldhen/index.html',
+  '900v3': '900v3/index.html'
+};
+
+function launchGoldHEN() {
+  const v = document.getElementById('fwSelect').value;
+  if (fwMap[v]) location.href = fwMap[v];
+}
+
+function togglePanel(id) {
+  document.getElementById(id).classList.toggle('hidden');
+}
+
+const ipInput = document.getElementById('ps4-ip');
+const savedIP = localStorage.getItem('ps4_ip');
+if (savedIP) ipInput.value = savedIP;
+
+function saveIP() {
+  const ip = ipInput.value.trim();
+  const status = document.getElementById('payload-status');
+  if (!ip) { status.textContent = '⚠️ اكتب IP أول'; return; }
+  localStorage.setItem('ps4_ip', ip);
+  status.textContent = '✅ تم حفظ IP: ' + ip;
+}
+
+async function sendPayload(file) {
+  const status = document.getElementById('payload-status');
+  const ip = localStorage.getItem('ps4_ip');
+  if (!ip) { status.textContent = '⚠️ اكتب IP أول'; return; }
+  status.textContent = 'جاري الإرسال...';
+  try {
+    const res = await fetch(file);
+    if (!res.ok) throw new Error('الملف مو موجود');
+    const data = await res.arrayBuffer();
+    await fetch(`http://${ip}:9090/`, { method: 'POST', body: data, mode: 'no-cors' });
+    status.textContent = '✅ تم إرسال ' + file + ' بنجاح!';
+  } catch (e) {
+    status.textContent = '❌ فشل: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>
